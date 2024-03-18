@@ -177,6 +177,18 @@ const osThreadAttr_t RedLedTask_attributes = {
   .stack_size = sizeof(RedLedTaskBuffer),
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for ReadFromADCTask */
+osThreadId_t ReadFromADCTaskHandle;
+uint32_t ReadFromADCTaskBuffer[ 128 ];
+osStaticThreadDef_t ReadFromADCTaskControlBlock;
+const osThreadAttr_t ReadFromADCTask_attributes = {
+  .name = "ReadFromADCTask",
+  .cb_mem = &ReadFromADCTaskControlBlock,
+  .cb_size = sizeof(ReadFromADCTaskControlBlock),
+  .stack_mem = &ReadFromADCTaskBuffer[0],
+  .stack_size = sizeof(ReadFromADCTaskBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for uartQueue */
 osMessageQueueId_t uartQueueHandle;
 uint8_t uartQueueBuffer[ 4 * sizeof( void* ) ];
@@ -209,6 +221,17 @@ const osMessageQueueAttr_t ModemSendQueue_attributes = {
   .cb_size = sizeof(ModemSendQueueControlBlock),
   .mq_mem = &ModemSendQueueBuffer,
   .mq_size = sizeof(ModemSendQueueBuffer)
+};
+/* Definitions for TemperatureQueue */
+osMessageQueueId_t TemperatureQueueHandle;
+uint8_t TemperatureQueueBuffer[ 8 * sizeof( uint32_t ) ];
+osStaticMessageQDef_t TemperatureQueueControlBlock;
+const osMessageQueueAttr_t TemperatureQueue_attributes = {
+  .name = "TemperatureQueue",
+  .cb_mem = &TemperatureQueueControlBlock,
+  .cb_size = sizeof(TemperatureQueueControlBlock),
+  .mq_mem = &TemperatureQueueBuffer,
+  .mq_size = sizeof(TemperatureQueueBuffer)
 };
 /* Definitions for PeriodicSendTimer */
 osTimerId_t PeriodicSendTimerHandle;
@@ -308,6 +331,7 @@ extern void BlueLedTaskCode(void *argument);
 extern void GreenLedTaskCode(void *argument);
 extern void YellowLedTaskCode(void *argument);
 extern void RedLedTaskCode(void *argument);
+extern void ReadFromADCTaskCode(void *argument);
 extern void PeriodicSendTimerCallback(void *argument);
 extern void ModemLedCallback(void *argument);
 extern void DutyCycleTimerCallback(void *argument);
@@ -430,6 +454,9 @@ int main(void)
   /* creation of ModemSendQueue */
   ModemSendQueueHandle = osMessageQueueNew (4, sizeof(void*), &ModemSendQueue_attributes);
 
+  /* creation of TemperatureQueue */
+  TemperatureQueueHandle = osMessageQueueNew (8, sizeof(uint32_t), &TemperatureQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -464,6 +491,9 @@ int main(void)
 
   /* creation of RedLedTask */
   RedLedTaskHandle = osThreadNew(RedLedTaskCode, NULL, &RedLedTask_attributes);
+
+  /* creation of ReadFromADCTask */
+  ReadFromADCTaskHandle = osThreadNew(ReadFromADCTaskCode, NULL, &ReadFromADCTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

@@ -88,6 +88,10 @@ void Error_Handler(void);
 #define STM_RX_Pin GPIO_PIN_10
 #define STM_RX_GPIO_Port GPIOA
 
+typedef struct {
+  uint32_t seq_no;
+  uint32_t temp_oCx100;
+} TEMPERATURE_OBJ_t;
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

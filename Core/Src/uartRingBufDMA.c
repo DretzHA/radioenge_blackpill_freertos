@@ -191,12 +191,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 
 size_t SendToUART(uint8_t *msg, size_t size)
 {
-	//osSemaphoreAcquire(UARTTXSemaphoreHandle,osWaitForever);		
+	osSemaphoreAcquire(UARTTXSemaphoreHandle,osWaitForever);		
 	uint32_t flagsX;
 	gPendingTXThreadID = osThreadGetId();
 	HAL_UART_Transmit_DMA(&UART, msg, size);
 	flagsX = osThreadFlagsWait(0x0001U, osFlagsWaitAny, osWaitForever); 
-	//osSemaphoreRelease(UARTTXSemaphoreHandle);		
+	osSemaphoreRelease(UARTTXSemaphoreHandle);		
 	return size;
 }
 

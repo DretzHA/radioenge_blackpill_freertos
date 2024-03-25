@@ -9,5 +9,13 @@
         "uartringbufdma.h": "c",
         "semphr.h": "c",
         "main.h": "c"
-    }
+    },
+    "vsmqtt.brokerProfiles": [
+        {
+            "name": "LoRa",
+            "host": "sigivest.eletrica.eng.br",
+            "port": 1883,
+            "clientId": "vsmqtt_client_81ea"
+        }
+    ]
 }

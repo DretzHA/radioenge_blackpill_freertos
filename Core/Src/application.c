@@ -36,7 +36,7 @@ void AppSendTaskCode(void *argument)
         HAL_ADC_PollForConversion(&hadc1, 100);
         read = HAL_ADC_GetValue(&hadc1);
         temp = (int32_t)(33000 * ((float)read / 4096));
-        sprintf(sendStr,"Temperature: %2d.%2d",temp/100,temp%100);
+        sprintf(sendStr,"Temperature: %02d.%02d",temp/100,temp%100);
         LoRaSendNow(2,sendStr);
         osDelay(30000);
     }

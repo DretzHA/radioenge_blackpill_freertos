@@ -12,7 +12,22 @@
     },
     "vsmqtt.brokerProfiles": [
         {
-            "name": "LoRa",
+            "name": "LoRa GW",
+            "host": "loragw.sctdf.com.br",
+            "port": 1883,
+            "clientId": "ANDREY_IGOR_client"
+        },
+        {
+            "name": "TTN App Andrey & Igor",
+            "host": "au1.cloud.thethings.network",
+            "port": 1883,
+            "username": "app-ai@ttn",
+            "password": "NNSXS.YJCCF452ZBMJKZG2B5LCMJDEXKILB7B344PFMRY.TXLP6FQJ3HNFELR4ODILEJOEHBY27JW7RK6WEKBY6IE5NCVOLCGA",
+            "clientId": "ANDREY_IGOR_client"
+        },
+
+        {
+            "name": "LoRa Original",
             "host": "sigivest.eletrica.eng.br",
             "port": 1883,
             "clientId": "vsmqtt_client_81ea"

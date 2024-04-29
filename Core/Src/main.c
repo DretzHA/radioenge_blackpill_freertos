@@ -126,7 +126,19 @@ const osThreadAttr_t AppSendTask_attributes = {
   .cb_size = sizeof(SendTemperatureControlBlock),
   .stack_mem = &SendTemperatureBuffer[0],
   .stack_size = sizeof(SendTemperatureBuffer),
-  .priority = (osPriority_t) osPriorityLow7,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for compTask */
+osThreadId_t compTaskHandle;
+uint32_t compTaskBuffer[ 128 ];
+osStaticThreadDef_t compTaskControlBlock;
+const osThreadAttr_t compTask_attributes = {
+  .name = "compTask",
+  .cb_mem = &compTaskControlBlock,
+  .cb_size = sizeof(compTaskControlBlock),
+  .stack_mem = &compTaskBuffer[0],
+  .stack_size = sizeof(compTaskBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for uartQueue */
 osMessageQueueId_t uartQueueHandle;
@@ -160,6 +172,17 @@ const osMessageQueueAttr_t ModemSendQueue_attributes = {
   .cb_size = sizeof(ModemSendQueueControlBlock),
   .mq_mem = &ModemSendQueueBuffer,
   .mq_size = sizeof(ModemSendQueueBuffer)
+};
+/* Definitions for compressorQueue */
+osMessageQueueId_t compressorQueueHandle;
+uint8_t compressorQueueBuffer[ 16 * sizeof( uint16_t ) ];
+osStaticMessageQDef_t compressorQueueControlBlock;
+const osMessageQueueAttr_t compressorQueue_attributes = {
+  .name = "compressorQueue",
+  .cb_mem = &compressorQueueControlBlock,
+  .cb_size = sizeof(compressorQueueControlBlock),
+  .mq_mem = &compressorQueueBuffer,
+  .mq_size = sizeof(compressorQueueBuffer)
 };
 /* Definitions for PeriodicSendTimer */
 osTimerId_t PeriodicSendTimerHandle;
@@ -255,6 +278,7 @@ extern void ATHandlingTaskCode(void *argument);
 extern void UARTProcTaskCode(void *argument);
 extern void ModemManagerTaskCode(void *argument);
 extern void AppSendTaskCode(void *argument);
+extern void compTaskCode(void *argument);
 extern void PeriodicSendTimerCallback(void *argument);
 extern void ModemLedCallback(void *argument);
 extern void DutyCycleTimerCallback(void *argument);
@@ -290,7 +314,6 @@ const volatile int uxTopUsedPriority = configMAX_PRIORITIES - 1; //this declarat
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
   uint32_t i;  
   (void)uxTopUsedPriority; //this declaration enables thread awareness for FreeRTOS using OpenOCD
@@ -336,19 +359,19 @@ int main(void)
 
   /* Create the semaphores(s) */
   /* creation of ATCommandSemaphore */
-  ATCommandSemaphoreHandle = osSemaphoreNew(1, 1, &ATCommandSemaphore_attributes);
+  ATCommandSemaphoreHandle = osSemaphoreNew(1, 0, &ATCommandSemaphore_attributes);
 
   /* creation of ATResponseSemaphore */
-  ATResponseSemaphoreHandle = osSemaphoreNew(1, 1, &ATResponseSemaphore_attributes);
+  ATResponseSemaphoreHandle = osSemaphoreNew(1, 0, &ATResponseSemaphore_attributes);
 
   /* creation of UARTTXSemaphore */
-  UARTTXSemaphoreHandle = osSemaphoreNew(1, 1, &UARTTXSemaphore_attributes);
+  UARTTXSemaphoreHandle = osSemaphoreNew(1, 0, &UARTTXSemaphore_attributes);
 
   /* creation of RadioStateSemaphore */
-  RadioStateSemaphoreHandle = osSemaphoreNew(1, 1, &RadioStateSemaphore_attributes);
+  RadioStateSemaphoreHandle = osSemaphoreNew(1, 0, &RadioStateSemaphore_attributes);
 
   /* creation of LoRaTXSemaphore */
-  LoRaTXSemaphoreHandle = osSemaphoreNew(1, 1, &LoRaTXSemaphore_attributes);
+  LoRaTXSemaphoreHandle = osSemaphoreNew(1, 0, &LoRaTXSemaphore_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -383,6 +406,9 @@ int main(void)
   /* creation of ModemSendQueue */
   ModemSendQueueHandle = osMessageQueueNew (4, sizeof(void*), &ModemSendQueue_attributes);
 
+  /* creation of compressorQueue */
+  compressorQueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &compressorQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -406,6 +432,9 @@ int main(void)
   /* creation of AppSendTask */
   AppSendTaskHandle = osThreadNew(AppSendTaskCode, NULL, &AppSendTask_attributes);
 
+  /* creation of compTask */
+  compTaskHandle = osThreadNew(compTaskCode, NULL, &compTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -422,7 +451,6 @@ int main(void)
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)

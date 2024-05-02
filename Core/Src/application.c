@@ -12,6 +12,7 @@ extern osEventFlagsId_t ModemStatusFlagsHandle;
 extern TIM_HandleTypeDef htim3;
 extern osMessageQueueId_t compressorQueueHandle;
 char msg[256];
+char msg_compressor[256];
 
 typedef struct {
     uint32_t seq_no;
@@ -23,29 +24,26 @@ typedef struct {
     uint8_t warning_status;   
 } __attribute__((packed)) COMPRESSOR_OBJ_t;
 
-
 void compTaskCode(void *argument) {
     int16_t compressor_power;
     osStatus_t status;
     int16_t old_power = 1;
-    char msg_compressor[256];
-    while (1)
-    {
+    while(1) {
         status = osMessageQueueGet(compressorQueueHandle, &compressor_power,
-                                NULL, 20000); // wait for message
-        if (status == osOK)
+                                 NULL, osWaitForever); // wait for message
+        if (status == osOK) 
         {
-            sprintf (msg, "Power: %d W\r\n", compressor_power);
-            SendToUART(msg, strlen(msg));
+            sprintf (msg_compressor, "Power: %d W\r\n", compressor_power);
+            SendToUART(msg_compressor, strlen(msg_compressor));
             if (old_power == 1 && compressor_power==100) {
-                for (int i=0;i<=100;i++) {
+                for (int i=0;i<=100;i=i+20) {
                 htim3.Instance->CCR2 = (htim3.Instance->ARR*i)/100;
                 sprintf (msg_compressor, "PWM: %d \r\n", i);
                 SendToUART(msg_compressor, strlen(msg_compressor));
                 }
             }
             else if (old_power == 100 && compressor_power==1) {
-                for (int i=100;i>=0;i--) {
+                for (int i=100;i>=0;i=i-20) {
                 htim3.Instance->CCR2 = (htim3.Instance->ARR*i)/100;
                 sprintf (msg_compressor, "PWM: %d \r\n", i);
                 SendToUART(msg_compressor, strlen(msg_compressor));
@@ -56,15 +54,14 @@ void compTaskCode(void *argument) {
                 SendToUART(msg_compressor, strlen(msg_compressor));
                 }
         }
+        old_power = compressor_power;
+        osDelay(12000);
     }
-            old_power = compressor_power;
-            osDelay(200);
-        }
-        
-
+}
 
 
 void putCompressor(uint16_t *compressor_power) {
+    //insere valor na fila do compressor
     osMessageQueuePut(compressorQueueHandle, &compressor_power, 0U, osWaitForever);
     osDelay(200);
 
@@ -76,11 +73,8 @@ void putCompressor(uint16_t *compressor_power) {
 void LoRaWAN_RxEventCallback(uint8_t *data, uint32_t length, uint32_t port, int32_t rssi, int32_t snr)
 {
     COMPRESSOR_OBJ_t compressor;
-
-    compressor.compressor_power = data[0];
-    //compressor.warning_status = data[1];
-    //printf(compressor.compressor_power);
-    putCompressor(compressor.compressor_power);
+    compressor.compressor_power = data[0]; //coloca valor recebido na variavel da struct
+    putCompressor(compressor.compressor_power); //funcao para inserir na fila
 }
 
 
@@ -113,7 +107,7 @@ void AppSendTaskCode(void *argument)
         read = HAL_ADC_GetValue(&hadc1);
         temp.seq_no++;
         temp.temp_oCx100 = (int32_t)(330*((float)read/4096));
-        LoRaSendBNow(2,(uint8_t*)&temp, sizeof(TEMPERATURE_OBJ_t));
+        LoRaSendBNow(2,(uint8_t*)&temp, sizeof(TEMPERATURE_OBJ_t)); //envia temp 
         // temp = (int32_t)(33000 * ((float)read / 4096));
         // sprintf(sendStr,"Temperature: %02d.%02d",temp/100,temp%100);
         // LoRaSendNow(2,sendStr);
@@ -124,6 +118,6 @@ void AppSendTaskCode(void *argument)
         //     sprintf (msg, "Power: %d W\r\n", compressor_power);
         //     SendToUART(msg, strlen(msg));
         // }
-        osDelay(30000);
+        osDelay(10000);
     }
 }

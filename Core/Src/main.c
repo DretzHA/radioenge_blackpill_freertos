@@ -138,7 +138,7 @@ const osThreadAttr_t compTask_attributes = {
   .cb_size = sizeof(compTaskControlBlock),
   .stack_mem = &compTaskBuffer[0],
   .stack_size = sizeof(compTaskBuffer),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for uartQueue */
 osMessageQueueId_t uartQueueHandle;

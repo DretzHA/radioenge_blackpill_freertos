@@ -28,26 +28,28 @@ void compTaskCode(void *argument) {
     int16_t compressor_power;
     osStatus_t status;
     int16_t old_power = 1;
+    HAL_GPIO_WritePin(BRIDGE_1_2_EN_GPIO_Port, BRIDGE_1_2_EN_Pin, GPIO_PIN_SET);;
     while(1) {
         status = osMessageQueueGet(compressorQueueHandle, &compressor_power,
                                  NULL, osWaitForever); // wait for message
         if (status == osOK) 
         {
+
             sprintf (msg_compressor, "Power: %d W\r\n", compressor_power);
             SendToUART(msg_compressor, strlen(msg_compressor));
-            if (old_power == 1 && compressor_power==100) {
-                for (int i=0;i<=100;i=i+20) {
-                htim3.Instance->CCR2 = (htim3.Instance->ARR*i)/100;
-                sprintf (msg_compressor, "PWM: %d \r\n", i);
+            if (compressor_power==80) {
+                //for (int i=0;i<=100;i=i+20) {
+                htim3.Instance->CCR2 = (htim3.Instance->ARR*compressor_power)/100;
+                sprintf (msg_compressor, "PWM: %d \r\n", compressor_power);
                 SendToUART(msg_compressor, strlen(msg_compressor));
-                }
+                //}
             }
-            else if (old_power == 100 && compressor_power==1) {
-                for (int i=100;i>=0;i=i-20) {
-                htim3.Instance->CCR2 = (htim3.Instance->ARR*i)/100;
-                sprintf (msg_compressor, "PWM: %d \r\n", i);
+            else if (compressor_power==20) {
+                //for (int i=100;i>=0;i=i-20) {
+                htim3.Instance->CCR2 = (htim3.Instance->ARR*compressor_power)/100;
+                sprintf (msg_compressor, "PWM: %d \r\n", compressor_power);
                 SendToUART(msg_compressor, strlen(msg_compressor));
-                }
+              //  }
             }
             else {
                 sprintf (msg_compressor, "Mantendo status \r\n");
